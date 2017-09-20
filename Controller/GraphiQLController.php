@@ -11,20 +11,47 @@
 
 namespace Overblog\GraphQLBundle\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\RouterInterface;
+use Twig\Environment as TwigEnvironment;
 
-class GraphiQLController extends Controller
+class GraphiQLController
 {
+    /**
+     * @var RouterInterface
+     */
+    private $router;
+
+    /**
+     * @var TwigEnvironment
+     */
+    private $twig;
+
+    /**
+     * @var String
+     */
+    private $twigGraphiqlTemplate;
+
+    public function __construct(
+        RouterInterface $router,
+        TwigEnvironment $twig,
+        $twigGraphiqlTemplate
+    ) {
+        $this->router = $router;
+        $this->twig = $twig;
+        $this->twigGraphiqlTemplate = $twigGraphiqlTemplate;
+    }
+
     public function indexAction($schemaName = null)
     {
         if (null === $schemaName) {
-            $endpoint = $this->generateUrl('overblog_graphql_endpoint');
+            $endpoint = $this->router->generate('overblog_graphql_endpoint');
         } else {
-            $endpoint = $this->generateUrl('overblog_graphql_multiple_endpoint', ['schemaName' => $schemaName]);
+            $endpoint = $this->router->generate('overblog_graphql_multiple_endpoint', ['schemaName' => $schemaName]);
         }
 
-        return $this->render(
-            $this->getParameter('overblog_graphql.graphiql_template'),
+        return Response::create($this->twig->render(
+            $this->twigGraphiqlTemplate,
             [
                 'endpoint' => $endpoint,
                 'versions' => [
@@ -33,6 +60,6 @@ class GraphiQLController extends Controller
                     'fetch' => $this->getParameter('overblog_graphql.versions.fetch'),
                 ],
             ]
-        );
+        ));
     }
 }
